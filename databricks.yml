@@ -1,0 +1,69 @@
+bundle:
+  name: databricks-avatar-assistant
+
+workspace:
+  host: ${DATABRICKS_HOST}
+
+include:
+  - resources/*.yml
+
+variables:
+  # LLM Configuration - Using Foundation Model APIs (pay-per-token for cost efficiency)
+  databricks_llm_endpoint:
+    description: "Foundation Model API endpoint"
+    default: "databricks-meta-llama-3-1-70b-instruct"
+
+  # TTS Configuration - Using Edge-TTS (FREE)
+  tts_provider:
+    description: "TTS provider"
+    default: "edge-tts"
+
+  # Service Principal (optional)
+  service_principal_client_id:
+    description: "Service principal client ID"
+    default: ""
+
+resources:
+  apps:
+    databricks_avatar:
+      name: databricks-avatar-${bundle.target}
+      description: "Cost-optimized expression-aware conversational avatar for Databricks"
+      source_code_path: .
+
+      config:
+        command:
+          - "uvicorn"
+          - "backend.main:app"
+          - "--host"
+          - "0.0.0.0"
+          - "--port"
+          - "8000"
+
+        env:
+          - name: DATABRICKS_LLM_ENDPOINT
+            value: ${var.databricks_llm_endpoint}
+          - name: TTS_PROVIDER
+            value: ${var.tts_provider}
+          - name: ENABLE_RESPONSE_CACHE
+            value: "true"
+
+      resources:
+        - name: avatar-backend
+          description: "FastAPI backend service"
+          job_cluster_key: default
+
+      permissions:
+        - level: CAN_USE
+          group_name: users
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: ${DATABRICKS_HOST}
+
+  prod:
+    mode: production
+    workspace:
+      host: ${DATABRICKS_HOST}
