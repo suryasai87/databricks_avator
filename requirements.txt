@@ -7,3 +7,6 @@ websockets>=12.0
 python-dotenv>=1.0.0
 pydantic>=2.5.3
 httpx>=0.26.0
+
+# TTS (FREE Microsoft Edge TTS)
+edge-tts>=6.1.9

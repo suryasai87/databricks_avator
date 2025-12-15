@@ -293,9 +293,9 @@ async def favicon():
     return Response(content=b"", media_type="image/x-icon")
 
 
-@app.get("/")
-async def root():
-    """Health check endpoint"""
+@app.get("/api/status")
+async def api_status():
+    """API status endpoint"""
     return {
         "status": "healthy",
         "service": "Databricks Avatar Assistant",
@@ -320,6 +320,27 @@ async def health_check():
             "llm": True,
             "lip_sync": True,
             "cache": True
+        }
+    }
+
+
+@app.get("/")
+async def root():
+    """Serve frontend or fallback to status"""
+    index_path = FRONTEND_DIST / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    # Fallback to API status if no frontend
+    return {
+        "status": "healthy",
+        "service": "Databricks Avatar Assistant",
+        "version": "1.0.0",
+        "message": "Frontend not deployed. Access /health for API status.",
+        "features": {
+            "tts": TTS_AVAILABLE,
+            "emotion_detection": EMOTION_AVAILABLE,
+            "lip_sync": True,
+            "caching": True
         }
     }
 
