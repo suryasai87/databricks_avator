@@ -1,6 +1,25 @@
 import { useState, useRef, useCallback } from 'react'
 import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 
+// Web Speech API types (not available in all TS configs)
+interface SpeechRecognitionResult {
+  isFinal: boolean
+  [index: number]: { transcript: string }
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult
+}
+
+interface SpeechRecognitionEventType {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEventType {
+  error: string
+}
+
 interface VoiceControlsProps {
   onVoiceInput: (transcript: string) => void
   disabled?: boolean
@@ -10,7 +29,7 @@ export function VoiceControls({ onVoiceInput, disabled }: VoiceControlsProps) {
   const [isListening, setIsListening] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [transcript, setTranscript] = useState('')
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<unknown>(null)
 
   // Initialize Web Speech API (FREE - runs in browser)
   const startListening = useCallback(() => {
@@ -31,7 +50,7 @@ export function VoiceControls({ onVoiceInput, disabled }: VoiceControlsProps) {
       setTranscript('')
     }
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEventType) => {
       const current = event.resultIndex
       const result = event.results[current]
       const text = result[0].transcript
@@ -45,7 +64,7 @@ export function VoiceControls({ onVoiceInput, disabled }: VoiceControlsProps) {
       }
     }
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEventType) => {
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
     }
@@ -60,7 +79,7 @@ export function VoiceControls({ onVoiceInput, disabled }: VoiceControlsProps) {
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop()
+      (recognitionRef.current as { stop: () => void }).stop()
       recognitionRef.current = null
     }
     setIsListening(false)

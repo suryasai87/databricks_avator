@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Environment } from '@react-three/drei'
+import { OrbitControls, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 
 interface VisemeData {
@@ -122,7 +122,9 @@ function AvatarModel({ emotion, isSpeaking }: { emotion: string; isSpeaking: boo
   )
 }
 
-export function Avatar3D({ visemeData, emotion = 'neutral', isSpeaking }: Avatar3DProps) {
+export function Avatar3D({ visemeData: _visemeData, emotion = 'neutral', isSpeaking }: Avatar3DProps) {
+  // Note: visemeData will be used for advanced lip sync in future
+  void _visemeData
   return (
     <div className="w-full h-full">
       <Canvas

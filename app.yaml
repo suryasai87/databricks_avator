@@ -1,0 +1,17 @@
+command:
+  - "uvicorn"
+  - "backend.main:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+env:
+  - name: TTS_PROVIDER
+    value: "edge-tts"
+  - name: ENABLE_RESPONSE_CACHE
+    value: "true"
+  - name: MAX_TOKENS_PER_RESPONSE
+    value: "300"
+  - name: LOG_LEVEL
+    value: "INFO"

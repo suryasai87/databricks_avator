@@ -3,18 +3,24 @@ Databricks Avatar Assistant - Cost-Optimized Backend
 FastAPI application with WebSocket support for real-time avatar interaction
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 import json
+import os
 from pathlib import Path
 
 from avatar_orchestrator import AvatarOrchestrator
 from utils.websocket_manager import WebSocketManager
 from config import settings
+
+# Get the directory containing this file
+BACKEND_DIR = Path(__file__).parent
+PROJECT_ROOT = BACKEND_DIR.parent
+FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
@@ -223,6 +229,33 @@ async def chat_endpoint(request: dict):
 
     response = await orchestrator.process_text_query(text, include_audio=include_audio)
     return response
+
+
+# Serve frontend static files if available
+if FRONTEND_DIST.exists():
+    # Mount assets directory
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        """Serve the SPA for all non-API routes"""
+        # Skip API routes
+        if full_path.startswith(("api/", "ws/", "health", "docs", "openapi.json")):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # Try to serve the requested file
+        file_path = FRONTEND_DIST / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+
+        # Fallback to index.html for SPA routing
+        index_path = FRONTEND_DIST / "index.html"
+        if index_path.exists():
+            return FileResponse(str(index_path))
+
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 if __name__ == "__main__":
